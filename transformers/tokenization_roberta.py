@@ -50,7 +50,7 @@ PRETRAINED_VOCAB_FILES_MAP = {
         'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-vocab.json",
         'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json",
         #"microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json",
-        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-large/blob/main/vocab.json"
     },
     'merges_file':
     {
@@ -61,12 +61,12 @@ PRETRAINED_VOCAB_FILES_MAP = {
         'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-merges.txt",
         'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
         #"microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
-        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-large/blob/main/merges.txt"
     },
-    'spm': 
-    {
-        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
-    }
+    #'spm': 
+    #{
+    #    "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
+    #}
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
