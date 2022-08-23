@@ -313,7 +313,7 @@ class BertModel(BertPreTrainedModel):
         print("embedding_output")
         print(type(embedding_output))
         print(embedding_output.shape) 
-        print(embedding_output.numpy())
+        print(embedding_output.cpu().numpy())
 
         embedding_output = torch.from_numpy(embedding_output.numpy())
 
