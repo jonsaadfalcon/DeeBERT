@@ -318,6 +318,7 @@ class BertModel(BertPreTrainedModel):
         print("embedding_output")
         print(type(embedding_output))
         print(embedding_output.shape) 
+        embedding_output = embedding_output.cpu()
         print(embedding_output)
 
         #embedding_output = embedding_output.cpu()
