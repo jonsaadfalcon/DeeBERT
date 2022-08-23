@@ -315,7 +315,9 @@ class BertModel(BertPreTrainedModel):
         print(embedding_output.shape) 
         #print(embedding_output.cpu().numpy())
 
-        embedding_output = torch.from_numpy(embedding_output.cpu().numpy()).cuda()
+        embedding_output = embedding_output.cpu().numpy()
+        embedding_output = torch.from_numpy(embedding_output)
+        embedding_output = embedding_output.cuda()
 
         encoder_outputs = self.encoder(embedding_output,
                                        attention_mask=extended_attention_mask,
