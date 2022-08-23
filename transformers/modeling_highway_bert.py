@@ -22,7 +22,7 @@ class BertEmbeddings(nn.Module):
     """
     def __init__(self, config):
         super(BertEmbeddings, self).__init__()
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=1)
+        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=0f)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
 
@@ -310,10 +310,10 @@ class BertModel(BertPreTrainedModel):
 
         embedding_output = self.embeddings(input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids, inputs_embeds=inputs_embeds)
         
-        #print("embedding_output")
-        #print(type(embedding_output))
-        #print(embedding_output.shape) 
-        #print(embedding_output) 
+        print("embedding_output")
+        print(type(embedding_output))
+        print(embedding_output.shape) 
+        print(embedding_output) 
 
         encoder_outputs = self.encoder(embedding_output,
                                        attention_mask=extended_attention_mask,
