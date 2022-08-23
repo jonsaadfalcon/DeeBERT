@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 
 TF_DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
     #'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-tf_model.h5",
-    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-xlarge/blob/main/tf_model.h5",
+    #'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-xlarge/blob/main/tf_model.h5",
+    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/tf_model.h5",
 }
 
 class TFDebertaEmbeddings(TFBertEmbeddings):

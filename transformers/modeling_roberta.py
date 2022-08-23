@@ -37,7 +37,8 @@ ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
     'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-pytorch_model.bin",
     'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-openai-detector-pytorch_model.bin",
     'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-openai-detector-pytorch_model.bin",
-    'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
+    #'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
+    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/pytorch_model.bin",
 }
 
 class RobertaEmbeddings(BertEmbeddings):

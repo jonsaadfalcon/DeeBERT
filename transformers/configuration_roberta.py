@@ -31,7 +31,8 @@ ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-config.json",
     'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-openai-detector-config.json",
     'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-openai-detector-config.json",
-    "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/config.json",
+    #"microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/config.json",
+    "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/config.json",
 }
 
 

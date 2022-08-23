@@ -49,7 +49,8 @@ PRETRAINED_VOCAB_FILES_MAP = {
         'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-vocab.json",
         'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-vocab.json",
         'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json",
-        "microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json"
+        #"microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json",
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
     },
     'merges_file':
     {
@@ -59,8 +60,13 @@ PRETRAINED_VOCAB_FILES_MAP = {
         'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-merges.txt",
         'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-merges.txt",
         'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
-        "microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
+        #"microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
     },
+    'spm': 
+    {
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model"
+    }
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {

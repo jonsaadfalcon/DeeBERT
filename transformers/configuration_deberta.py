@@ -25,7 +25,8 @@ from .configuration_bert import BertConfig
 logger = logging.getLogger(__name__)
 
 DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/config.json",
+    #"microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/config.json",
+    "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/config.json",
 }
 
 

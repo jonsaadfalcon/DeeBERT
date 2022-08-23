@@ -32,7 +32,8 @@ from .file_utils import add_start_docstrings
 logger = logging.getLogger(__name__)
 
 DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
-    'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
+    #'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
+    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/pytorch_model.bin",
 }
 
 class DebertaEmbeddings(BertEmbeddings):

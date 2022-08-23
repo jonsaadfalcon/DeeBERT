@@ -11,7 +11,8 @@ from .modeling_highway_bert import BertModel, BertPreTrainedModel, entropy, High
 from .configuration_deberta import DebertaConfig
 
 DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
-    'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
+    #'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
+    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/pytorch_model.bin",
 }
 
 

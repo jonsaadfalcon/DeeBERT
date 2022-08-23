@@ -44,14 +44,20 @@ VOCAB_FILES_NAMES = {
 PRETRAINED_VOCAB_FILES_MAP = {
     'vocab_file':
     {
-        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/vocab.json",
+        #"microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/vocab.json",
         #"microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json"
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model",
     },
     'merges_file':
     {
-        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/merges.txt",
+        #"microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/merges.txt",
         #"microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model",
     },
+    'spm':
+    {
+        "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-v2-xlarge/blob/main/spm.model",
+    }
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
