@@ -301,9 +301,9 @@ class BertModel(BertPreTrainedModel):
 
         #input_ids = input_ids.long()
 
-        #input_ids = input_ids.to(torch.int32)
+        input_ids = input_ids.to(torch.long)
         #position_ids = torch.tensor(position_ids).to(torch.int64)
-        #token_type_ids = token_type_ids.to(torch.int32)
+        token_type_ids = token_type_ids.to(torch.long)
         #inputs_embeds = torch.tensor(inputs_embeds).to(torch.int64)
 
         #print("input_ids and token_type_ids")
