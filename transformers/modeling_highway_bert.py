@@ -306,7 +306,7 @@ class BertModel(BertPreTrainedModel):
         token_type_ids = token_type_ids.to(torch.int32)
         #inputs_embeds = torch.tensor(inputs_embeds).to(torch.int64)
 
-        input_ids = input_ids.where(tf.equal(a, 0), 0, a)
+        input_ids[input_ids <= 0] = 0
 
         #print("input_ids and token_type_ids")
         #print(input_ids.shape)
