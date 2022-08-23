@@ -313,7 +313,7 @@ class BertModel(BertPreTrainedModel):
         print("embedding_output")
         print(type(embedding_output))
         print(embedding_output.shape) 
-        print(embedding_output) 
+        print(str(embedding_output))
 
         encoder_outputs = self.encoder(embedding_output,
                                        attention_mask=extended_attention_mask,
