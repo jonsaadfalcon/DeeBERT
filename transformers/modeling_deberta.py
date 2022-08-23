@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
     #'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
-    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-large/blob/main/pytorch_model.bin",
+    'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-v2-xlarge/resolve/main/pytorch_model.bin",
 }
 
 class DebertaEmbeddings(BertEmbeddings):
