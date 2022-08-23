@@ -1,3 +1,5 @@
+
+
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
@@ -22,7 +24,6 @@ import glob
 import logging
 import os
 import random
-import time
 
 import numpy as np
 import torch
@@ -38,8 +39,9 @@ except:
 from tqdm import tqdm, trange
 
 from transformers import (WEIGHTS_NAME, BertConfig,
-                                  BertTokenizer,
+                                  BertForSequenceClassification, BertTokenizer,
                                   RobertaConfig,
+                                  RobertaForSequenceClassification,
                                   RobertaTokenizer,
                                   XLMConfig, XLMForSequenceClassification,
                                   XLMTokenizer, XLNetConfig,
@@ -49,9 +51,7 @@ from transformers import (WEIGHTS_NAME, BertConfig,
                                   DistilBertForSequenceClassification,
                                   DistilBertTokenizer)
 
-from transformers.modeling_highway_bert import BertForSequenceClassification
-from transformers.modeling_highway_roberta import RobertaForSequenceClassification
-
+# from transformers.modeling_highway_roberta import RobertaForSequenceClassification
 from transformers import AdamW, get_linear_schedule_with_warmup
 
 from transformers import glue_compute_metrics as compute_metrics
@@ -59,9 +59,19 @@ from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
 from transformers import glue_convert_examples_to_features as convert_examples_to_features
 
+############################################################
+
+import ast
+import pandas as pd
+import pyarrow as pa
+import datasets
+import statistics
+
+############################################################
+
 logger = logging.getLogger(__name__)
 
-ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, XLMConfig,
+ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, XLMConfig, 
                                                                                 RobertaConfig, DistilBertConfig)), ())
 
 MODEL_CLASSES = {
@@ -81,22 +91,7 @@ def set_seed(args):
         torch.cuda.manual_seed_all(args.seed)
 
 
-def get_wanted_result(result):
-    if "spearmanr" in result:
-        print_result = result["spearmanr"]
-    elif "f1" in result:
-        print_result = result["f1"]
-    elif "mcc" in result:
-        print_result = result["mcc"]
-    elif "acc" in result:
-        print_result = result["acc"]
-    else:
-        print(result)
-        exit(1)
-    return print_result
-
-
-def train(args, train_dataset, model, tokenizer, train_highway=False):
+def train(args, train_dataset, model, tokenizer):
     """ Train the model """
     if args.local_rank in [-1, 0]:
         tb_writer = SummaryWriter()
@@ -113,23 +108,9 @@ def train(args, train_dataset, model, tokenizer, train_highway=False):
 
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ['bias', 'LayerNorm.weight']
-    if train_highway:
-        optimizer_grouped_parameters = [
-            {'params': [p for n, p in model.named_parameters() if
-                        ("highway" in n) and (not any(nd in n for nd in no_decay))],
-             'weight_decay': args.weight_decay},
-            {'params': [p for n, p in model.named_parameters() if
-                        ("highway" in n) and (any(nd in n for nd in no_decay))],
-             'weight_decay': 0.0}
-        ]
-    else:
-        optimizer_grouped_parameters = [
-            {'params': [p for n, p in model.named_parameters() if
-                        ("highway" not in n) and (not any(nd in n for nd in no_decay))],
-             'weight_decay': args.weight_decay},
-            {'params': [p for n, p in model.named_parameters() if
-                        ("highway" not in n) and (any(nd in n for nd in no_decay))],
-             'weight_decay': 0.0}
+    optimizer_grouped_parameters = [
+        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
+        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
         ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total)
@@ -175,7 +156,6 @@ def train(args, train_dataset, model, tokenizer, train_highway=False):
                       'labels':         batch[3]}
             if args.model_type != 'distilbert':
                 inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
-            inputs['train_highway'] = train_highway
             outputs = model(**inputs)
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 
@@ -235,14 +215,14 @@ def train(args, train_dataset, model, tokenizer, train_highway=False):
     return global_step, tr_loss / global_step
 
 
-def evaluate(args, model, tokenizer, prefix="", output_layer=-1, eval_highway=False):
+def evaluate(args, model, tokenizer, prefix=""):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     eval_outputs_dirs = (args.output_dir, args.output_dir + '-MM') if args.task_name == "mnli" else (args.output_dir,)
 
     results = {}
     for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
-        eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, evaluate=True)
+        eval_dataset = load_and_cache_examples(args, args.text_classification_dataset, "test", tokenizer, evaluate=True)
 
         if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
             os.makedirs(eval_output_dir)
@@ -264,8 +244,6 @@ def evaluate(args, model, tokenizer, prefix="", output_layer=-1, eval_highway=Fa
         nb_eval_steps = 0
         preds = None
         out_label_ids = None
-        exit_layer_counter = {(i+1):0 for i in range(model.num_layers)}
-        st = time.time()
         for batch in tqdm(eval_dataloader, desc="Evaluating"):
             model.eval()
             batch = tuple(t.to(args.device) for t in batch)
@@ -276,11 +254,7 @@ def evaluate(args, model, tokenizer, prefix="", output_layer=-1, eval_highway=Fa
                           'labels':         batch[3]}
                 if args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
-                if output_layer >= 0:
-                    inputs['output_layer'] = output_layer
                 outputs = model(**inputs)
-                if eval_highway:
-                    exit_layer_counter[outputs[-1]] += 1
                 tmp_eval_loss, logits = outputs[:2]
 
                 eval_loss += tmp_eval_loss.mean().item()
@@ -291,8 +265,6 @@ def evaluate(args, model, tokenizer, prefix="", output_layer=-1, eval_highway=Fa
             else:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
-        eval_time = time.time() - st
-        print("Eval time:", eval_time)
 
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
@@ -301,24 +273,6 @@ def evaluate(args, model, tokenizer, prefix="", output_layer=-1, eval_highway=Fa
             preds = np.squeeze(preds)
         result = compute_metrics(eval_task, preds, out_label_ids)
         results.update(result)
-
-        if eval_highway:
-            print("Exit layer counter", exit_layer_counter)
-            actual_cost = sum([l*c for l, c in exit_layer_counter.items()])
-            full_cost = len(eval_dataloader) * model.num_layers
-            print("Expected saving", actual_cost/full_cost)
-            if args.early_exit_entropy>=0:
-                save_fname = args.plot_data_dir + '/' +\
-                             args.model_name_or_path[2:] +\
-                             "/entropy_{}.npy".format(args.early_exit_entropy)
-                if not os.path.exists(os.path.dirname(save_fname)):
-                    os.makedirs(os.path.dirname(save_fname))
-                print_result = get_wanted_result(result)
-                np.save(save_fname,
-                        np.array([exit_layer_counter,
-                                  eval_time,
-                                  actual_cost/full_cost,
-                                  print_result]))
 
         output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
@@ -330,66 +284,95 @@ def evaluate(args, model, tokenizer, prefix="", output_layer=-1, eval_highway=Fa
     return results
 
 
-def load_and_cache_examples(args, task, tokenizer, evaluate=False):
-    if args.local_rank not in [-1, 0] and not evaluate:
-        torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
+def load_and_cache_examples(args, dataset, dataset_section, tokenizer, evaluate=False):
 
-    processor = processors[task]()
-    output_mode = output_modes[task]
-    # Load data features from cache or dataset file
-    cached_features_file = os.path.join(args.data_dir, 'cached_{}_{}_{}_{}'.format(
-        'dev' if evaluate else 'train',
-        list(filter(None, args.model_name_or_path.split('/'))).pop(),
-        str(args.max_seq_length),
-        str(task)))
-    if os.path.exists(cached_features_file) and not args.overwrite_cache:
-        logger.info("Loading features from cached file %s", cached_features_file)
-        features = torch.load(cached_features_file)
-    else:
-        logger.info("Creating features from dataset file at %s", args.data_dir)
-        label_list = processor.get_labels()
-        if task in ['mnli', 'mnli-mm'] and args.model_type in ['roberta']:
-            # HACK(label indices are swapped in RoBERTa pretrained model)
-            label_list[1], label_list[2] = label_list[2], label_list[1]
-        examples = processor.get_dev_examples(args.data_dir) if evaluate else processor.get_train_examples(args.data_dir)
-        features = convert_examples_to_features(examples,
-                                                tokenizer,
-                                                label_list=label_list,
-                                                max_length=args.max_seq_length,
-                                                output_mode=output_mode,
-                                                pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
-                                                pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
-                                                pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0,
-        )
-        if args.local_rank in [-1, 0]:
-            logger.info("Saving features into cached file %s", cached_features_file)
-            torch.save(features, cached_features_file)
+    ############################################################
 
-    if args.local_rank == 0 and not evaluate:
-        torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
+    def tokenize_function(examples):
 
-    # Convert to Tensors and build dataset
-    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-    all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-    all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-    if output_mode == "classification":
-        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-    elif output_mode == "regression":
-        all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
+        tokenized_examples = []
+        total_attention_masks = []
 
-    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
+        pad_token = tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0]
 
-    print("Tensor Dataset")
-    print(all_input_ids.shape)
-    print(type(all_input_ids))
-    print(all_attention_mask.shape)
-    print(type(all_attention_mask))
-    print(all_token_type_ids.shape)
-    print(type(all_token_type_ids))
-    print(all_labels.shape)
-    print(type(all_labels))
+        for example in examples["text"]:
 
-    return dataset
+            tokenized_example = tokenizer.tokenize(example)
+            tokenized_example = tokenizer.convert_tokens_to_ids(tokenized_example)
+
+            attention_mask = [1 for item in tokenized_example]
+
+            while len(tokenized_example) < 512:
+            	tokenized_example.append(pad_token)
+            	attention_mask.append(0)
+
+            tokenized_examples.append(tokenized_example[:512])
+            total_attention_masks.append(attention_mask[:512])
+
+        #print("tokenized_examples")
+        #print(tokenized_examples[:2])
+
+        return {"input_ids": tokenized_examples, "attention_mask": total_attention_masks}
+
+    ############################################################
+
+    with open('text_classification/' + dataset + '/' + dataset_section + '.txt') as f:
+
+        train_set = f.readlines()
+        train_set = [ast.literal_eval(line) for line in train_set]
+        train_set_text = [line['text'] for line in train_set]
+        train_set_label = [line['label'] for line in train_set]
+
+    ############################################################
+
+    labels_list = sorted(list(set(train_set_label)))
+
+    label_to_value_dict = {}
+
+    count = 0
+    for label in labels_list:
+      label_to_value_dict[label] = count
+      count += 1
+
+    train_set_label = [label_to_value_dict[label] for label in train_set_label]
+
+    ############################################################
+
+    training_dataset_pandas = pd.DataFrame({'label': train_set_label, 'text': train_set_text})#[:1000]
+    training_dataset_arrow = pa.Table.from_pandas(training_dataset_pandas)
+    training_dataset_arrow = datasets.Dataset(training_dataset_arrow)
+
+    tokenized_datasets = datasets.DatasetDict({'train' : training_dataset_arrow})
+    tokenized_datasets = tokenized_datasets.map(tokenize_function, batched=True)
+
+
+    tokenized_datasets = tokenized_datasets.remove_columns(["text"])
+    tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
+    tokenized_datasets.set_format("torch")
+
+    ############################################################
+
+    final_dataset = TensorDataset(tokenized_datasets['train']['input_ids'], 
+    							  tokenized_datasets['train']['attention_mask'], 
+    							  tokenized_datasets['train']['attention_mask'],
+    							  #tokenized_datasets['train']['token_type_ids'],
+    							  tokenized_datasets['train']['labels'])
+
+    ############################################################
+
+    print("Text Classification Dataset")
+    print(tokenized_datasets['train']['input_ids'].shape)
+    print(type(tokenized_datasets['train']['input_ids']))
+    print(tokenized_datasets['train']['attention_mask'].shape)
+    print(type(tokenized_datasets['train']['attention_mask']))
+    #print(tokenized_datasets['train']['token_type_ids'].shape)
+    #print(type(tokenized_datasets['train']['token_type_ids']))
+    print(tokenized_datasets['train']['labels'].shape)
+    print(type(tokenized_datasets['train']['labels']))
+    
+    return final_dataset
+
+
 
 
 def main():
@@ -398,6 +381,20 @@ def main():
     ## Required parameters
     parser.add_argument("--data_dir", default=None, type=str, required=True,
                         help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
+    
+
+
+
+    parser.add_argument("--text_classification_dataset", default=None, type=str, required=True,
+                        help="Text classification dataset chosen.")
+    parser.add_argument("--num_labels", default=None, type=int, required=True,
+                        help="Number of labels in dataset.")
+    parser.add_argument("--frozen_layers", default=None, type=int, required=True,
+                        help="Layers to Freeze")
+
+
+
+
     parser.add_argument("--model_type", default=None, type=str, required=True,
                         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
     parser.add_argument("--model_name_or_path", default=None, type=str, required=True,
@@ -406,8 +403,6 @@ def main():
                         help="The name of the task to train selected in the list: " + ", ".join(processors.keys()))
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
-    parser.add_argument("--plot_data_dir", default="./plotting/", type=str, required=False,
-                        help="The directory to store data for plotting figures.")
 
     ## Other parameters
     parser.add_argument("--config_name", default="", type=str,
@@ -427,12 +422,6 @@ def main():
                         help="Rul evaluation during training at each logging step.")
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
-    parser.add_argument("--eval_each_highway", action='store_true',
-                        help="Set this flag to evaluate each highway.")
-    parser.add_argument("--eval_after_first_stage", action='store_true',
-                        help="Set this flag to evaluate after training only bert (not highway).")
-    parser.add_argument("--eval_highway", action='store_true',
-                        help="Set this flag if it's evaluating highway models")
 
     parser.add_argument("--per_gpu_train_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for training.")
@@ -454,9 +443,6 @@ def main():
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
-    parser.add_argument("--early_exit_entropy", default=-1, type=float,
-                        help = "Entropy threshold for early exit.")
-
 
     parser.add_argument('--logging_steps', type=int, default=50,
                         help="Log every X updates steps.")
@@ -523,7 +509,13 @@ def main():
     processor = processors[args.task_name]()
     args.output_mode = output_modes[args.task_name]
     label_list = processor.get_labels()
-    num_labels = len(label_list)
+
+    ######################################################
+
+    #num_labels = len(label_list)
+    num_labels = args.num_labels
+
+    ######################################################
 
     # Load pretrained model and tokenizer
     if args.local_rank not in [-1, 0]:
@@ -543,13 +535,6 @@ def main():
                                         config=config,
                                         cache_dir=args.cache_dir if args.cache_dir else None)
 
-    if args.model_type == "bert":
-        model.bert.encoder.set_early_exit_entropy(args.early_exit_entropy)
-        model.bert.init_highway_pooler()
-    else:
-        model.roberta.encoder.set_early_exit_entropy(args.early_exit_entropy)
-        model.roberta.init_highway_pooler()
-
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
 
@@ -560,15 +545,9 @@ def main():
 
     # Training
     if args.do_train:
-        train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
+        train_dataset = load_and_cache_examples(args, args.text_classification_dataset, "train", tokenizer, evaluate=False)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
-
-        if args.eval_after_first_stage:
-            result = evaluate(args, model, tokenizer, prefix="")
-            print_result = get_wanted_result(result)
-
-        train(args, train_dataset, model, tokenizer, train_highway=True)
 
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
@@ -605,32 +584,10 @@ def main():
         for checkpoint in checkpoints:
             global_step = checkpoint.split('-')[-1] if len(checkpoints) > 1 else ""
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-
+            
             model = model_class.from_pretrained(checkpoint)
-            if args.model_type=="bert":
-                model.bert.encoder.set_early_exit_entropy(args.early_exit_entropy)
-            else:
-                model.roberta.encoder.set_early_exit_entropy(args.early_exit_entropy)
             model.to(args.device)
-            result = evaluate(args, model, tokenizer, prefix=prefix,
-                              eval_highway=args.eval_highway)
-            print_result = get_wanted_result(result)
-            print("Result: {}".format(print_result))
-            if args.eval_each_highway:
-                last_layer_results = print_result
-                each_layer_results = []
-                for i in range(model.num_layers):
-                    logger.info("\n")
-                    _result = evaluate(args, model, tokenizer, prefix=prefix,
-                                       output_layer=i, eval_highway=args.eval_highway)
-                    if i+1 < model.num_layers:
-                        each_layer_results.append(get_wanted_result(_result))
-                each_layer_results.append(last_layer_results)
-                save_fname = args.plot_data_dir + '/' + args.model_name_or_path[2:] + "/each_layer.npy"
-                if not os.path.exists(os.path.dirname(save_fname)):
-                    os.makedirs(os.path.dirname(save_fname))
-                np.save(save_fname,
-                        np.array(each_layer_results))
+            result = evaluate(args, model, tokenizer, prefix=prefix)
             result = dict((k + '_{}'.format(global_step), v) for k, v in result.items())
             results.update(result)
 
@@ -639,3 +596,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -447,6 +447,10 @@ class PreTrainedModel(nn.Module):
             if hasattr(model, cls.base_model_prefix) and not any(s.startswith(cls.base_model_prefix) for s in state_dict.keys()):
                 model_to_load = getattr(model, cls.base_model_prefix)
 
+            #print("model_to_load")
+            #print(model_to_load)
+            #print(start_prefix)
+
             load(model_to_load, prefix=start_prefix)
             if len(missing_keys) > 0:
                 logger.info("Weights of {} not initialized from pretrained model: {}".format(

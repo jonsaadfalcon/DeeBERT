@@ -1,3 +1,4 @@
+
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
@@ -13,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""PyTorch RoBERTa model. """
+"""PyTorch DeBERTa model. """
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -25,27 +26,21 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
 
 from .modeling_bert import BertEmbeddings, BertLayerNorm, BertModel, BertPreTrainedModel, gelu
-from .configuration_roberta import RobertaConfig
+from .configuration_deberta import DebertaConfig
 from .file_utils import add_start_docstrings
 
 logger = logging.getLogger(__name__)
 
-ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
-    'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-pytorch_model.bin",
-    'roberta-large': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-pytorch_model.bin",
-    'roberta-large-mnli': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-mnli-pytorch_model.bin",
-    'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-pytorch_model.bin",
-    'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-openai-detector-pytorch_model.bin",
-    'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-openai-detector-pytorch_model.bin",
+DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
     'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
 }
 
-class RobertaEmbeddings(BertEmbeddings):
+class DebertaEmbeddings(BertEmbeddings):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
     def __init__(self, config):
-        super(RobertaEmbeddings, self).__init__(config)
+        super(DebertaEmbeddings, self).__init__(config)
         self.padding_idx = 1
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=self.padding_idx)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size,
@@ -65,13 +60,13 @@ class RobertaEmbeddings(BertEmbeddings):
             # cf. fairseq's `utils.make_positions`
             position_ids = torch.arange(self.padding_idx+1, seq_length+self.padding_idx+1, dtype=torch.long, device=device)
             position_ids = position_ids.unsqueeze(0).expand(input_shape)
-        return super(RobertaEmbeddings, self).forward(input_ids,
+        return super(DebertaEmbeddings, self).forward(input_ids,
                                                       token_type_ids=token_type_ids,
                                                       position_ids=position_ids,
                                                       inputs_embeds=inputs_embeds)
 
 
-ROBERTA_START_DOCSTRING = r"""    The RoBERTa model was proposed in
+DEBERTA_START_DOCSTRING = r"""    The RoBERTa model was proposed in
     `RoBERTa: A Robustly Optimized BERT Pretraining Approach`_
     by Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer,
     Veselin Stoyanov. It is based on Google's BERT model released in 2018.
@@ -97,7 +92,7 @@ ROBERTA_START_DOCSTRING = r"""    The RoBERTa model was proposed in
             Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model weights.
 """
 
-ROBERTA_INPUTS_DOCSTRING = r"""
+DEBERTA_INPUTS_DOCSTRING = r"""
     Inputs:
         **input_ids**: ``torch.LongTensor`` of shape ``(batch_size, sequence_length)``:
             Indices of input sequence tokens in the vocabulary.
@@ -144,8 +139,8 @@ ROBERTA_INPUTS_DOCSTRING = r"""
 """
 
 @add_start_docstrings("The bare RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
-                      ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class RobertaModel(BertModel):
+                      DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class DebertaModel(BertModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **last_hidden_state**: ``torch.FloatTensor`` of shape ``(batch_size, sequence_length, hidden_size)``
@@ -174,14 +169,14 @@ class RobertaModel(BertModel):
         last_hidden_states = outputs[0]  # The last hidden-state is the first element of the output tuple
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaModel, self).__init__(config)
+        super(DebertaModel, self).__init__(config)
 
-        self.embeddings = RobertaEmbeddings(config)
+        self.embeddings = DebertaEmbeddings(config)
         self.init_weights()
 
     def get_input_embeddings(self):
@@ -190,9 +185,9 @@ class RobertaModel(BertModel):
     def set_input_embeddings(self, value):
         self.embeddings.word_embeddings = value
 
-@add_start_docstrings("""RoBERTa Model with a `language modeling` head on top. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class RobertaForMaskedLM(BertPreTrainedModel):
+@add_start_docstrings("""DeBERTa Model with a `language modeling` head on top. """,
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class DebertaForMaskedLM(BertPreTrainedModel):
     r"""
         **masked_lm_labels**: (`optional`) ``torch.LongTensor`` of shape ``(batch_size, sequence_length)``:
             Labels for computing the masked language modeling loss.
@@ -222,15 +217,15 @@ class RobertaForMaskedLM(BertPreTrainedModel):
         loss, prediction_scores = outputs[:2]
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaForMaskedLM, self).__init__(config)
+        super(DebertaForMaskedLM, self).__init__(config)
 
-        self.roberta = RobertaModel(config)
-        self.lm_head = RobertaLMHead(config)
+        self.deberta = DebertaModel(config)
+        self.lm_head = DebertaLMHead(config)
 
         self.init_weights()
 
@@ -239,7 +234,7 @@ class RobertaForMaskedLM(BertPreTrainedModel):
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None,
                 masked_lm_labels=None):
-        outputs = self.roberta(input_ids,
+        outputs = self.deberta(input_ids,
                                attention_mask=attention_mask,
                                token_type_ids=token_type_ids,
                                position_ids=position_ids,
@@ -258,11 +253,11 @@ class RobertaForMaskedLM(BertPreTrainedModel):
         return outputs  # (masked_lm_loss), prediction_scores, (hidden_states), (attentions)
 
 
-class RobertaLMHead(nn.Module):
-    """Roberta Head for masked language modeling."""
+class DebertaLMHead(nn.Module):
+    """Deberta Head for masked language modeling."""
 
     def __init__(self, config):
-        super(RobertaLMHead, self).__init__()
+        super(DebertaLMHead, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.layer_norm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
@@ -282,8 +277,8 @@ class RobertaLMHead(nn.Module):
 
 @add_start_docstrings("""RoBERTa Model transformer with a sequence classification/regression head on top (a linear layer 
     on top of the pooled output) e.g. for GLUE tasks. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class RobertaForSequenceClassification(BertPreTrainedModel):
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class DebertaForSequenceClassification(BertPreTrainedModel):
     r"""
         **labels**: (`optional`) ``torch.LongTensor`` of shape ``(batch_size,)``:
             Labels for computing the sequence classification/regression loss.
@@ -314,20 +309,20 @@ class RobertaForSequenceClassification(BertPreTrainedModel):
         loss, logits = outputs[:2]
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaForSequenceClassification, self).__init__(config)
+        super(DebertaForSequenceClassification, self).__init__(config)
         self.num_labels = config.num_labels
 
-        self.roberta = RobertaModel(config)
-        self.classifier = RobertaClassificationHead(config)
+        self.deberta = DebertaModel(config)
+        self.classifier = DebertaClassificationHead(config)
     
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None,
                 labels=None):
-        outputs = self.roberta(input_ids,
+        outputs = self.deberta(input_ids,
                                attention_mask=attention_mask,
                                token_type_ids=token_type_ids,
                                position_ids=position_ids,
@@ -350,10 +345,10 @@ class RobertaForSequenceClassification(BertPreTrainedModel):
         return outputs  # (loss), logits, (hidden_states), (attentions)
 
 
-@add_start_docstrings("""Roberta Model with a multiple choice classification head on top (a linear layer on top of
+@add_start_docstrings("""Deberta Model with a multiple choice classification head on top (a linear layer on top of
     the pooled output and a softmax) e.g. for RocStories/SWAG tasks. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class RobertaForMultipleChoice(BertPreTrainedModel):
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class DebertaForMultipleChoice(BertPreTrainedModel):
     r"""
     Inputs:
         **input_ids**: ``torch.LongTensor`` of shape ``(batch_size, num_choices, sequence_length)``:
@@ -423,14 +418,14 @@ class RobertaForMultipleChoice(BertPreTrainedModel):
         loss, classification_scores = outputs[:2]
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaForMultipleChoice, self).__init__(config)
+        super(DebertaForMultipleChoice, self).__init__(config)
 
-        self.roberta = RobertaModel(config)
+        self.deberta = DebertaModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, 1)
 
@@ -444,7 +439,7 @@ class RobertaForMultipleChoice(BertPreTrainedModel):
         flat_position_ids = position_ids.view(-1, position_ids.size(-1)) if position_ids is not None else None
         flat_token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1)) if token_type_ids is not None else None
         flat_attention_mask = attention_mask.view(-1, attention_mask.size(-1)) if attention_mask is not None else None
-        outputs = self.roberta(flat_input_ids, position_ids=flat_position_ids, token_type_ids=flat_token_type_ids,
+        outputs = self.deberta(flat_input_ids, position_ids=flat_position_ids, token_type_ids=flat_token_type_ids,
                             attention_mask=flat_attention_mask, head_mask=head_mask)
         pooled_output = outputs[1]
 
@@ -462,10 +457,10 @@ class RobertaForMultipleChoice(BertPreTrainedModel):
         return outputs  # (loss), reshaped_logits, (hidden_states), (attentions)
 
 
-@add_start_docstrings("""Roberta Model with a token classification head on top (a linear layer on top of
+@add_start_docstrings("""Deberta Model with a token classification head on top (a linear layer on top of
     the hidden-states output) e.g. for Named-Entity-Recognition (NER) tasks. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class RobertaForTokenClassification(BertPreTrainedModel):
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class DebertaForTokenClassification(BertPreTrainedModel):
     r"""
         **labels**: (`optional`) ``torch.LongTensor`` of shape ``(batch_size, sequence_length)``:
             Labels for computing the token classification loss.
@@ -494,15 +489,15 @@ class RobertaForTokenClassification(BertPreTrainedModel):
         loss, scores = outputs[:2]
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaForTokenClassification, self).__init__(config)
+        super(DebertaForTokenClassification, self).__init__(config)
         self.num_labels = config.num_labels
 
-        self.roberta = RobertaModel(config)
+        self.deberta = DebertaModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
@@ -511,7 +506,7 @@ class RobertaForTokenClassification(BertPreTrainedModel):
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
                 position_ids=None, head_mask=None, inputs_embeds=None, labels=None):
 
-        outputs = self.roberta(input_ids,
+        outputs = self.deberta(input_ids,
                                attention_mask=attention_mask,
                                token_type_ids=token_type_ids,
                                position_ids=position_ids,
@@ -539,11 +534,11 @@ class RobertaForTokenClassification(BertPreTrainedModel):
         return outputs  # (loss), scores, (hidden_states), (attentions)
 
 
-class RobertaClassificationHead(nn.Module):
+class DebertaClassificationHead(nn.Module):
     """Head for sentence-level classification tasks."""
 
     def __init__(self, config):
-        super(RobertaClassificationHead, self).__init__()
+        super(DebertaClassificationHead, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)

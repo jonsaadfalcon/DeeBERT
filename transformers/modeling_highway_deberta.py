@@ -1,3 +1,4 @@
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -5,22 +6,16 @@ import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
 
-from .modeling_roberta import RobertaEmbeddings
+from .modeling_deberta import DebertaEmbeddings
 from .modeling_highway_bert import BertModel, BertPreTrainedModel, entropy, HighwayException
-from .configuration_roberta import RobertaConfig
+from .configuration_deberta import DebertaConfig
 
-ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
-    'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-pytorch_model.bin",
-    'roberta-large': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-pytorch_model.bin",
-    'roberta-large-mnli': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-mnli-pytorch_model.bin",
-    'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-pytorch_model.bin",
-    'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-openai-detector-pytorch_model.bin",
-    'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-openai-detector-pytorch_model.bin",
+DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
     'microsoft/deberta-xlarge': "../EmbeddingRecycling/deberta/model/pytorch_model.bin",
 }
 
 
-class RobertaModel(BertModel):
+class DebertaModel(BertModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **last_hidden_state**: ``torch.FloatTensor`` of shape ``(batch_size, sequence_length, hidden_size)``
@@ -49,14 +44,14 @@ class RobertaModel(BertModel):
         last_hidden_states = outputs[0]  # The last hidden-state is the first element of the output tuple
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaModel, self).__init__(config)
+        super(DebertaModel, self).__init__(config)
 
-        self.embeddings = RobertaEmbeddings(config)
+        self.embeddings = DebertaEmbeddings(config)
         self.init_weights()
 
     def get_input_embeddings(self):
@@ -66,7 +61,7 @@ class RobertaModel(BertModel):
         self.embeddings.word_embeddings = value
 
 
-class RobertaForSequenceClassification(BertPreTrainedModel):
+class DebertaForSequenceClassification(BertPreTrainedModel):
     r"""
         **labels**: (`optional`) ``torch.LongTensor`` of shape ``(batch_size,)``:
             Labels for computing the sequence classification/regression loss.
@@ -97,16 +92,16 @@ class RobertaForSequenceClassification(BertPreTrainedModel):
         loss, logits = outputs[:2]
 
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
     def __init__(self, config):
-        super(RobertaForSequenceClassification, self).__init__(config)
+        super(DebertaForSequenceClassification, self).__init__(config)
         self.num_labels = config.num_labels
         self.num_layers = config.num_hidden_layers
 
-        self.roberta = RobertaModel(config)
+        self.deberta = DebertaModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, self.config.num_labels)
 
@@ -117,7 +112,7 @@ class RobertaForSequenceClassification(BertPreTrainedModel):
 
         exit_layer = self.num_layers
         try:
-            outputs = self.roberta(input_ids,
+            outputs = self.deberta(input_ids,
                                    attention_mask=attention_mask,
                                    token_type_ids=token_type_ids,
                                    position_ids=position_ids,

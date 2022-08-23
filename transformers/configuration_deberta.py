@@ -24,16 +24,10 @@ from .configuration_bert import BertConfig
 
 logger = logging.getLogger(__name__)
 
-ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-config.json",
-    'roberta-large': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-config.json",
-    'roberta-large-mnli': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-mnli-config.json",
-    'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-config.json",
-    'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-openai-detector-config.json",
-    'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-openai-detector-config.json",
+DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     "microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/config.json",
 }
 
 
-class RobertaConfig(BertConfig):
-    pretrained_config_archive_map = ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP
+class DebertaConfig(BertConfig):
+    pretrained_config_archive_map = DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP

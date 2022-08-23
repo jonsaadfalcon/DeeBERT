@@ -1,3 +1,5 @@
+
+
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
@@ -23,7 +25,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-from .configuration_roberta import RobertaConfig
+from .configuration_deberta import DebertaConfig
 from .modeling_tf_utils import TFPreTrainedModel, get_initializer
 from .file_utils import add_start_docstrings
 
@@ -31,20 +33,17 @@ from .modeling_tf_bert import TFBertEmbeddings, TFBertMainLayer, gelu, gelu_new
 
 logger = logging.getLogger(__name__)
 
-TF_ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
-    'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-tf_model.h5",
-    'roberta-large': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-tf_model.h5",
-    'roberta-large-mnli': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-mnli-tf_model.h5",
-    'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-tf_model.h5",
+TF_DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
+    #'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-tf_model.h5",
     'microsoft/deberta-xlarge': "https://huggingface.co/microsoft/deberta-xlarge/blob/main/tf_model.h5",
 }
 
-class TFRobertaEmbeddings(TFBertEmbeddings):
+class TFDebertaEmbeddings(TFBertEmbeddings):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
     def __init__(self, config, **kwargs):
-        super(TFRobertaEmbeddings, self).__init__(config, **kwargs)
+        super(TFDebertaEmbeddings, self).__init__(config, **kwargs)
         self.padding_idx = 1
 
     def _embedding(self, inputs, training=False):
@@ -59,31 +58,31 @@ class TFRobertaEmbeddings(TFBertEmbeddings):
         if position_ids is None:
             position_ids = tf.range(self.padding_idx+1, seq_length+self.padding_idx+1, dtype=tf.int32)[tf.newaxis, :]
 
-        return super(TFRobertaEmbeddings, self)._embedding([input_ids, position_ids, token_type_ids, inputs_embeds], training=training)
+        return super(TFDebertaEmbeddings, self)._embedding([input_ids, position_ids, token_type_ids, inputs_embeds], training=training)
 
 
-class TFRobertaMainLayer(TFBertMainLayer):
+class TFDebertaMainLayer(TFBertMainLayer):
     """
     Same as TFBertMainLayer but uses TFRobertaEmbeddings.
     """
     def __init__(self, config, **kwargs):
-        super(TFRobertaMainLayer, self).__init__(config, **kwargs)
-        self.embeddings = TFRobertaEmbeddings(config, name='embeddings')
+        super(TFDebertaMainLayer, self).__init__(config, **kwargs)
+        self.embeddings = TFDebertaEmbeddings(config, name='embeddings')
 
     def get_input_embeddings(self):
         return self.embeddings
 
 
-class TFRobertaPreTrainedModel(TFPreTrainedModel):
+class TFDebertaPreTrainedModel(TFPreTrainedModel):
     """ An abstract class to handle weights initialization and
         a simple interface for dowloading and loading pretrained models.
     """
-    config_class = RobertaConfig
-    pretrained_model_archive_map = TF_ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
-    base_model_prefix = "roberta"
+    config_class = DebertaConfig
+    pretrained_model_archive_map = TF_DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
+    base_model_prefix = "deberta"
 
 
-ROBERTA_START_DOCSTRING = r"""    The RoBERTa model was proposed in
+DEBERTA_START_DOCSTRING = r"""    The RoBERTa model was proposed in
     `RoBERTa: A Robustly Optimized BERT Pretraining Approach`_
     by Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer,
     Veselin Stoyanov. It is based on Google's BERT model released in 2018.
@@ -125,7 +124,7 @@ ROBERTA_START_DOCSTRING = r"""    The RoBERTa model was proposed in
             Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model weights.
 """
 
-ROBERTA_INPUTS_DOCSTRING = r"""
+DEBERTA_INPUTS_DOCSTRING = r"""
     Inputs:
         **input_ids**: ``Numpy array`` or ``tf.Tensor`` of shape ``(batch_size, sequence_length)``:
             Indices of input sequence tokens in the vocabulary.
@@ -172,8 +171,8 @@ ROBERTA_INPUTS_DOCSTRING = r"""
 """
 
 @add_start_docstrings("The bare RoBERTa Model transformer outputing raw hidden-states without any specific head on top.",
-                      ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class TFRobertaModel(TFRobertaPreTrainedModel):
+                      DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class TFDebertaModel(TFDebertaPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **last_hidden_state**: ``tf.Tensor`` of shape ``(batch_size, sequence_length, hidden_size)``
@@ -206,18 +205,18 @@ class TFRobertaModel(TFRobertaPreTrainedModel):
 
     """
     def __init__(self, config, *inputs, **kwargs):
-        super(TFRobertaModel, self).__init__(config, *inputs, **kwargs)
-        self.roberta = TFRobertaMainLayer(config, name='roberta')
+        super(TFDebertaModel, self).__init__(config, *inputs, **kwargs)
+        self.deberta = TFDebertaMainLayer(config, name='deberta')
 
     def call(self, inputs, **kwargs):
-        outputs = self.roberta(inputs, **kwargs)
+        outputs = self.deberta(inputs, **kwargs)
         return outputs
 
 
-class TFRobertaLMHead(tf.keras.layers.Layer):
+class TFDebertaLMHead(tf.keras.layers.Layer):
     """Roberta Head for masked language modeling."""
     def __init__(self, config, input_embeddings, **kwargs):
-        super(TFRobertaLMHead, self).__init__(**kwargs)
+        super(TFDebertaLMHead, self).__init__(**kwargs)
         self.vocab_size = config.vocab_size
         self.dense = tf.keras.layers.Dense(config.hidden_size,
                                            kernel_initializer=get_initializer(config.initializer_range),
@@ -234,7 +233,7 @@ class TFRobertaLMHead(tf.keras.layers.Layer):
                                     initializer='zeros',
                                     trainable=True,
                                     name='bias')
-        super(TFRobertaLMHead, self).build(input_shape)
+        super(TFDebertaLMHead, self).build(input_shape)
 
     def call(self, features):
         x = self.dense(features)
@@ -248,8 +247,8 @@ class TFRobertaLMHead(tf.keras.layers.Layer):
 
 
 @add_start_docstrings("""RoBERTa Model with a `language modeling` head on top. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class TFRobertaForMaskedLM(TFRobertaPreTrainedModel):
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class TFDebertaForMaskedLM(TFDebertaPreTrainedModel):
     r"""
         **masked_lm_labels**: (`optional`) ``Numpy array`` or ``tf.Tensor`` of shape ``(batch_size, sequence_length)``:
             Labels for computing the masked language modeling loss.
@@ -283,16 +282,16 @@ class TFRobertaForMaskedLM(TFRobertaPreTrainedModel):
 
     """
     def __init__(self, config, *inputs, **kwargs):
-        super(TFRobertaForMaskedLM, self).__init__(config, *inputs, **kwargs)
+        super(TFDebertaForMaskedLM, self).__init__(config, *inputs, **kwargs)
 
-        self.roberta = TFRobertaMainLayer(config, name="roberta")
-        self.lm_head = TFRobertaLMHead(config, self.roberta.embeddings, name="lm_head")
+        self.deberta = TFDebertaMainLayer(config, name="deberta")
+        self.lm_head = TFDebertaLMHead(config, self.deberta.embeddings, name="lm_head")
 
     def get_output_embeddings(self):
         return self.lm_head.decoder
 
     def call(self, inputs, **kwargs):
-        outputs = self.roberta(inputs, **kwargs)
+        outputs = self.deberta(inputs, **kwargs)
 
         sequence_output = outputs[0]
         prediction_scores = self.lm_head(sequence_output)
@@ -302,11 +301,11 @@ class TFRobertaForMaskedLM(TFRobertaPreTrainedModel):
         return outputs  # prediction_scores, (hidden_states), (attentions)
 
 
-class TFRobertaClassificationHead(tf.keras.layers.Layer):
+class TFDebertaClassificationHead(tf.keras.layers.Layer):
     """Head for sentence-level classification tasks."""
 
     def __init__(self, config, **kwargs):
-        super(TFRobertaClassificationHead, self).__init__(config, **kwargs)
+        super(TFDebertaClassificationHead, self).__init__(config, **kwargs)
         self.dense = tf.keras.layers.Dense(config.hidden_size,
                                            kernel_initializer=get_initializer(config.initializer_range),
                                            activation='tanh',
@@ -325,10 +324,10 @@ class TFRobertaClassificationHead(tf.keras.layers.Layer):
         return x
 
 
-@add_start_docstrings("""RoBERTa Model transformer with a sequence classification/regression head on top (a linear layer 
+@add_start_docstrings("""DeBERTa Model transformer with a sequence classification/regression head on top (a linear layer 
     on top of the pooled output) e.g. for GLUE tasks. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class TFRobertaForSequenceClassification(TFRobertaPreTrainedModel):
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class TFDebertaForSequenceClassification(TFDebertaPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **logits**: ``tf.Tensor`` of shape ``(batch_size, config.num_labels)``
@@ -355,14 +354,14 @@ class TFRobertaForSequenceClassification(TFRobertaPreTrainedModel):
 
     """
     def __init__(self, config, *inputs, **kwargs):
-        super(TFRobertaForSequenceClassification, self).__init__(config, *inputs, **kwargs)
+        super(TFDebertaForSequenceClassification, self).__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
 
-        self.roberta = TFRobertaMainLayer(config, name="roberta")
-        self.classifier = TFRobertaClassificationHead(config, name="classifier")
+        self.deberta = TFDebertaMainLayer(config, name="deberta")
+        self.classifier = TFDebertaClassificationHead(config, name="classifier")
     
     def call(self, inputs, **kwargs):
-        outputs = self.roberta(inputs, **kwargs)
+        outputs = self.deberta(inputs, **kwargs)
 
         sequence_output = outputs[0]
         logits = self.classifier(sequence_output, training=kwargs.get('training', False))
@@ -372,10 +371,10 @@ class TFRobertaForSequenceClassification(TFRobertaPreTrainedModel):
         return outputs  # logits, (hidden_states), (attentions)
 
 
-@add_start_docstrings("""RoBERTa Model with a token classification head on top (a linear layer on top of
+@add_start_docstrings("""DeBERTa Model with a token classification head on top (a linear layer on top of
     the hidden-states output) e.g. for Named-Entity-Recognition (NER) tasks. """,
-    ROBERTA_START_DOCSTRING, ROBERTA_INPUTS_DOCSTRING)
-class TFRobertaForTokenClassification(TFRobertaPreTrainedModel):
+    DEBERTA_START_DOCSTRING, DEBERTA_INPUTS_DOCSTRING)
+class TFDebertaForTokenClassification(TFDebertaPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **scores**: ``Numpy array`` or ``tf.Tensor`` of shape ``(batch_size, sequence_length, config.num_labels)``
@@ -401,17 +400,17 @@ class TFRobertaForTokenClassification(TFRobertaPreTrainedModel):
 
     """
     def __init__(self, config, *inputs, **kwargs):
-        super(TFRobertaForTokenClassification, self).__init__(config, *inputs, **kwargs)
+        super(TFDebertaForTokenClassification, self).__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
 
-        self.roberta = TFRobertaMainLayer(config, name='roberta')
+        self.deberta = TFDebertaMainLayer(config, name='deberta')
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.classifier = tf.keras.layers.Dense(config.num_labels,
                                                 kernel_initializer=get_initializer(config.initializer_range),
                                                 name='classifier')
 
     def call(self, inputs, **kwargs):
-        outputs = self.roberta(inputs, **kwargs)
+        outputs = self.deberta(inputs, **kwargs)
 
         sequence_output = outputs[0]
 

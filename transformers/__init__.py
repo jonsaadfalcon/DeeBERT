@@ -41,6 +41,7 @@ from .tokenization_ctrl import CTRLTokenizer
 from .tokenization_xlnet import XLNetTokenizer, SPIECE_UNDERLINE
 from .tokenization_xlm import XLMTokenizer
 from .tokenization_roberta import RobertaTokenizer
+from .tokenization_deberta import DebertaTokenizer
 from .tokenization_distilbert import DistilBertTokenizer
 from .tokenization_camembert import CamembertTokenizer
 
@@ -56,6 +57,7 @@ from .configuration_xlnet import XLNetConfig, XLNET_PRETRAINED_CONFIG_ARCHIVE_MA
 from .configuration_ctrl import CTRLConfig, CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_xlm import XLMConfig, XLM_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_roberta import RobertaConfig, ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP
+from .configuration_deberta import DebertaConfig, DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_distilbert import DistilBertConfig, DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_camembert import CamembertConfig, CAMEMBERT_PRETRAINED_CONFIG_ARCHIVE_MAP
 
@@ -94,6 +96,10 @@ if is_torch_available():
                                 RobertaForSequenceClassification, RobertaForMultipleChoice,
                                 RobertaForTokenClassification,
                                 ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP)
+    from .modeling_deberta import (DebertaForMaskedLM, DebertaModel,
+                                DebertaForSequenceClassification, DebertaForMultipleChoice,
+                                DebertaForTokenClassification,
+                                DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP)
     from .modeling_distilbert import (DistilBertForMaskedLM, DistilBertModel,
                                 DistilBertForSequenceClassification, DistilBertForQuestionAnswering,
                                 DistilBertForTokenClassification,
@@ -151,6 +157,12 @@ if is_tf_available():
                                       TFRobertaForSequenceClassification,
                                       TFRobertaForTokenClassification,
                                       TF_ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP)
+
+    from .modeling_tf_deberta import (TFDebertaPreTrainedModel, TFDebertaMainLayer,
+                                      TFDebertaModel, TFDebertaForMaskedLM,
+                                      TFDebertaForSequenceClassification,
+                                      TFDebertaForTokenClassification,
+                                      TF_DEBERTA_PRETRAINED_MODEL_ARCHIVE_MAP)
 
     from .modeling_tf_distilbert import (TFDistilBertPreTrainedModel, TFDistilBertMainLayer,
                                          TFDistilBertModel, TFDistilBertForMaskedLM,

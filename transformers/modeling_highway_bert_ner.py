@@ -1,3 +1,5 @@
+
+
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss
@@ -5,16 +7,55 @@ from torch.nn import CrossEntropyLoss, MSELoss
 from .modeling_bert import BertLayer, BertLayerNorm, BertPreTrainedModel
 
 
-def entropy(x, current_layer, type_of_entropy):
+def entropy(x, given_attention_mask, current_layer, type_of_entropy):
+    # x: torch.Tensor, logits BEFORE softmax
 
-    # Do not perform early exiting if exit would occur in cached layer
-    # Set entropy very high to indicate
+    #print("x, atttention for entropy")
+    #print(x.shape)
+    #print(given_attention_mask.shape)
+
     if current_layer < 0 and type_of_entropy == "highway":
         return 100000
 
-    # x: torch.Tensor, logits BEFORE softmax
-    x = torch.softmax(x, dim=-1)               # softmax normalized prob distribution
-    return -torch.sum(x*torch.log(x), dim=-1)  # entropy calculation on probs: -\sum(p \ln(p))
+    x = torch.reshape(x, (256, x.shape[2]))
+    given_attention_mask = torch.reshape(given_attention_mask, (256, 1))
+
+    #print("x, atttention for entropy again")
+    #print(x.shape)
+    #print(given_attention_mask.shape)
+    #print(given_attention_mask[0][0])
+    #print(type(given_attention_mask[0][0]))
+    #print(given_attention_mask[0][0] == 0)
+
+    total_entropy = []
+    entropy_count = 0
+
+    try:
+
+        for i in range(0, len(given_attention_mask)):
+            if given_attention_mask[i][0] != 0:
+                
+                current_entropy = torch.softmax(x[i], dim=-1) 
+                current_entropy = -torch.sum(current_entropy*torch.log(current_entropy), dim=-1)
+                
+                total_entropy.append(current_entropy)
+                entropy_count += 1
+
+
+        total_entropy = max(total_entropy)
+        #total_entropy = sum(total_entropy) / entropy_count
+        return total_entropy
+
+    except:
+
+        print("x, atttention for entropy for failed entropy")
+        print(x.shape)
+        print(given_attention_mask.shape)
+
+        return 100000
+
+    #x = torch.softmax(x, dim=-1)               # softmax normalized prob distribution
+    #return -torch.sum(x*torch.log(x), dim=-1)  # entropy calculation on probs: -\sum(p \ln(p))
 
 
 class BertEmbeddings(nn.Module):
@@ -105,7 +146,7 @@ class BertEncoder(nn.Module):
 
             if not self.training:
                 highway_logits = highway_exit[0]
-                highway_entropy = entropy(highway_logits, i, "highway")
+                highway_entropy = entropy(highway_logits, attention_mask, i, "highway")
                 highway_exit = highway_exit + (highway_entropy,)  # logits, hidden_states(?), entropy
                 all_highway_exits = all_highway_exits + (highway_exit,)
 
@@ -171,15 +212,12 @@ class BertModel(BertPreTrainedModel):
         **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``torch.FloatTensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
-
     Examples::
-
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = BertModel.from_pretrained('bert-base-uncased')
         input_ids = torch.tensor(tokenizer.encode("Hello, my dog is cute")).unsqueeze(0)  # Batch size 1
         outputs = model(input_ids)
         last_hidden_states = outputs[0]  # The last hidden-state is the first element of the output tuple
-
     """
     def __init__(self, config):
         super(BertModel, self).__init__(config)
@@ -211,19 +249,15 @@ class BertModel(BertPreTrainedModel):
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None,
                 head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None):
         """ Forward pass on the Model.
-
         The model can behave as an encoder (with only self-attention) as well
         as a decoder, in which case a layer of cross-attention is added between
         the self-attention layers, following the architecture described in `Attention is all you need`_ by Ashish Vaswani,
         Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser and Illia Polosukhin.
-
         To behave as an decoder the model needs to be initialized with the
         `is_decoder` argument of the configuration set to `True`; an
         `encoder_hidden_states` is expected as an input to the forward pass.
-
         .. _`Attention is all you need`:
             https://arxiv.org/abs/1706.03762
-
         """
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
@@ -293,28 +327,7 @@ class BertModel(BertPreTrainedModel):
         else:
             head_mask = [None] * self.config.num_hidden_layers
 
-        #print("Input ids type")
-        #print(type(input_ids))
-
-        #input_ids = input_ids.long()
-
-        #input_ids = input_ids.to(torch.int32)
-        #position_ids = torch.tensor(position_ids).to(torch.int64)
-        #token_type_ids = token_type_ids.to(torch.int32)
-        #inputs_embeds = torch.tensor(inputs_embeds).to(torch.int64)
-
-        #print("input_ids and token_type_ids")
-        #print(input_ids.shape)
-        #print(max(input_ids))
-        #print(token_type_ids.shape)
-
         embedding_output = self.embeddings(input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids, inputs_embeds=inputs_embeds)
-        
-        #print("embedding_output")
-        #print(type(embedding_output))
-        #print(embedding_output.shape) 
-        #print(embedding_output) 
-
         encoder_outputs = self.encoder(embedding_output,
                                        attention_mask=extended_attention_mask,
                                        head_mask=head_mask,
@@ -349,11 +362,11 @@ class BertHighway(nn.Module):
     def forward(self, encoder_outputs):
         # Pooler
         pooler_input = encoder_outputs[0]
-        pooler_output = self.pooler(pooler_input)
+        #pooler_output = self.pooler(pooler_input)
         # "return" pooler_output
 
         # BertModel
-        bmodel_output = (pooler_input, pooler_output) + encoder_outputs[1:]
+        bmodel_output = (pooler_input, pooler_input) + encoder_outputs[1:]
         # "return" bodel_output
 
         # Dropout and classification
@@ -361,6 +374,9 @@ class BertHighway(nn.Module):
 
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
+
+        #print("Bert highway forward pass")
+        #print(logits.shape)
 
         return logits, pooled_output
 
@@ -372,7 +388,6 @@ class BertForSequenceClassification(BertPreTrainedModel):
             Indices should be in ``[0, ..., config.num_labels - 1]``.
             If ``config.num_labels == 1`` a regression loss is computed (Mean-Square loss),
             If ``config.num_labels > 1`` a classification loss is computed (Cross-Entropy).
-
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **loss**: (`optional`, returned when ``labels`` is provided) ``torch.FloatTensor`` of shape ``(1,)``:
             Classification (or regression if config.num_labels==1) loss.
@@ -385,16 +400,13 @@ class BertForSequenceClassification(BertPreTrainedModel):
         **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``torch.FloatTensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
-
     Examples::
-
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
         input_ids = torch.tensor(tokenizer.encode("Hello, my dog is cute")).unsqueeze(0)  # Batch size 1
         labels = torch.tensor([1]).unsqueeze(0)  # Batch size 1
         outputs = model(input_ids, labels=labels)
         loss, logits = outputs[:2]
-
     """
     def __init__(self, config):
         super(BertForSequenceClassification, self).__init__(config)
@@ -432,7 +444,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
             logits = outputs[0]
 
         if not self.training:
-            original_entropy = entropy(logits, i, "original")
+            original_entropy = entropy(logits, attention_mask, 0, "original")
             highway_entropy = []
             highway_logits_all = []
         if labels is not None:

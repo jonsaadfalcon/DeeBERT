@@ -1,3 +1,4 @@
+
 # coding=utf-8
 # Copyright 2018 The Open AI Team Authors and The HuggingFace Inc. team.
 #
@@ -43,39 +44,24 @@ VOCAB_FILES_NAMES = {
 PRETRAINED_VOCAB_FILES_MAP = {
     'vocab_file':
     {
-        'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-vocab.json",
-        'roberta-large': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json",
-        'roberta-large-mnli': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-mnli-vocab.json",
-        'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-vocab.json",
-        'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-vocab.json",
-        'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json",
+        #"microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/vocab.json",
         "microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json"
     },
     'merges_file':
     {
-        'roberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-merges.txt",
-        'roberta-large': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
-        'roberta-large-mnli': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-mnli-merges.txt",
-        'distilroberta-base': "https://s3.amazonaws.com/models.huggingface.co/bert/distilroberta-base-merges.txt",
-        'roberta-base-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-merges.txt",
-        'roberta-large-openai-detector': "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
+        #"microsoft/deberta-xlarge": "https://huggingface.co/microsoft/deberta-xlarge/resolve/main/merges.txt",
         "microsoft/deberta-xlarge": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt",
     },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
-    'roberta-base': 512,
-    'roberta-large': 512,
-    'roberta-large-mnli': 512,
-    'distilroberta-base': 512,
-    'roberta-base-openai-detector': 512,
-    'roberta-large-openai-detector': 512,
+    'microsoft/deberta-xlarge': 512,
 }
 
 
-class RobertaTokenizer(GPT2Tokenizer):
+class DebertaTokenizer(GPT2Tokenizer):
     """
-    RoBERTa BPE tokenizer, derived from the GPT-2 tokenizer. Peculiarities:
+    DeBERTa BPE tokenizer, derived from the GPT-2 tokenizer. Peculiarities:
         - Byte-level Byte-Pair-Encoding
         - Requires a space to start the input string => the encoding methods should be called with the
           ``add_prefix_space`` flag set to ``True``.
@@ -88,7 +74,7 @@ class RobertaTokenizer(GPT2Tokenizer):
 
     def __init__(self, vocab_file, merges_file, errors='replace', bos_token="<s>", eos_token="</s>", sep_token="</s>",
                  cls_token="<s>", unk_token="<unk>", pad_token='<pad>', mask_token='<mask>', **kwargs):
-        super(RobertaTokenizer, self).__init__(vocab_file=vocab_file, merges_file=merges_file, errors=errors,
+        super(DebertaTokenizer, self).__init__(vocab_file=vocab_file, merges_file=merges_file, errors=errors,
                                                bos_token=bos_token, eos_token=eos_token, unk_token=unk_token,
                                                sep_token=sep_token, cls_token=cls_token, pad_token=pad_token,
                                                mask_token=mask_token, **kwargs)
