@@ -3,7 +3,7 @@ export CUDA_VISIBLE_DEVICES=0
 
 PATH_TO_DATA=glue_data
 
-MODEL_TYPE=roberta # bert, roberta, or deberta
+MODEL_TYPE=deberta # bert, roberta, or deberta
 MODEL_SIZE=large  # base or large
 DATASET=MRPC  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
 
@@ -11,7 +11,7 @@ CHOSEN_DATASET=sci-cite #sci-cite #sciie-relation-extraction #chemprot #sci-cite
 NUMBER_OF_LABELS=3
 
 #MODEL_NAME=${MODEL_TYPE}-${MODEL_SIZE}
-MODEL_NAME=roberta-large #roberta-large #allenai/scibert_scivocab_uncased #roberta-large
+MODEL_NAME=microsoft/deberta-xlarge #roberta-large #allenai/scibert_scivocab_uncased #roberta-large
 EPOCHS=10
 FROZEN_LAYERS=0
 RUNS=1
