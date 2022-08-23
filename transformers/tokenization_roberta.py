@@ -70,6 +70,7 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     'distilroberta-base': 512,
     'roberta-base-openai-detector': 512,
     'roberta-large-openai-detector': 512,
+    "microsoft/deberta-xlarge": 512,
 }
 
 
