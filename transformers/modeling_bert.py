@@ -178,7 +178,7 @@ class BertEmbeddings(nn.Module):
         #print("Max value")
         #print(position_ids)
 
-        #position_ids = torch.sub(position_ids, 2)
+        position_ids = torch.sub(position_ids, 2)
 
         #print("Max value again")
         #print(position_ids)
