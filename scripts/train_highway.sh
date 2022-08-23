@@ -3,7 +3,7 @@ export CUDA_VISIBLE_DEVICES=0
 
 PATH_TO_DATA=glue_data
 
-MODEL_TYPE=deberta # bert, roberta, or deberta
+MODEL_TYPE=roberta # bert, roberta, or deberta
 MODEL_SIZE=large  # base or large
 DATASET=MRPC  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
 
