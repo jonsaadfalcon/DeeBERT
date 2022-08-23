@@ -85,6 +85,9 @@ class BertEncoder(nn.Module):
         all_attentions = ()
         all_highway_exits = ()
         for i, layer_module in enumerate(self.layer):
+
+            print("Currently at layer " + str(i))
+
             if self.output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
