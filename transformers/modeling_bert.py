@@ -173,6 +173,8 @@ class BertEmbeddings(nn.Module):
             token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
 
         if inputs_embeds is None:
+            print("Given input ids")
+            print(input_ids)
             inputs_embeds = self.word_embeddings(input_ids)
 
         #print("Max value")
